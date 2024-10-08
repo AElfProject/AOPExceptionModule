@@ -22,14 +22,22 @@ public class ExceptionHandler : OnMethodBoundaryAspect
 
     public override void OnException(MethodExecutionArgs args)
     {
+        // If it's an AggregateException, iterate through inner exceptions
         if (args.Exception is AggregateException aggEx)
         {
             foreach (var innerEx in aggEx.InnerExceptions)
             {
-                Console.WriteLine($"Inner exception: {innerEx.Message}");
+                HandleInnerException(innerEx, args);
             }
         }
-        
+        else
+        {
+            HandleInnerException(args.Exception, args);
+        }
+    }
+    
+    private void HandleInnerException(Exception exception, MethodExecutionArgs args)
+    {
         if(!Exception.IsInstanceOfType(args.Exception))
         {
             return;
