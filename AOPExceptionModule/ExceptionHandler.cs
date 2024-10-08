@@ -16,9 +16,21 @@ public class ExceptionHandler : OnMethodBoundaryAspect
     
     public Type TargetType { get; set; }
     public string MethodName { get; set; }
-    public Type Exception { get; set; }
+    private Type[] Exceptions { get; set; }
 
     private static readonly ConcurrentDictionary<string, MethodInfo> MethodCache = new();
+    
+    public ExceptionHandler(params Type [] exceptions)
+    {
+        // loop through to check if all types are exceptions
+        if (exceptions.Any(exception => !typeof(Exception).IsAssignableFrom(exception)))
+        {
+            throw new ArgumentException("All types must be exceptions");
+        }
+
+        Exceptions = exceptions;
+        //SemanticallyAdvisedMethodKinds = SemanticallyAdvisedMethodKinds.None;
+    }
 
     public override void OnException(MethodExecutionArgs args)
     {
@@ -38,7 +50,8 @@ public class ExceptionHandler : OnMethodBoundaryAspect
     
     private void HandleInnerException(Exception exception, MethodExecutionArgs args)
     {
-        if(!Exception.IsInstanceOfType(args.Exception))
+        // If the exception is not of the specified type, return early
+        if (!Exceptions.Any(e => e.IsInstanceOfType(exception)))
         {
             return;
         }

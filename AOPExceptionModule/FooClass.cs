@@ -30,13 +30,10 @@ public class FooClass
         //throw new Exception("Test exception");
     }
 
-    [ExceptionHandler(Exception = typeof(Exception), 
+    [ExceptionHandler(typeof(Exception), 
         TargetType = typeof(FooClass), 
         MethodName = nameof(HandleException))]
-    [ExceptionHandler(Exception = typeof(InvalidOperationException), 
-                        TargetType = typeof(FooClass), 
-                        MethodName = nameof(HandleException))]
-    [ExceptionHandler(Exception = typeof(ArgumentException), 
+    [ExceptionHandler([typeof(ArgumentException), typeof(InvalidOperationException)], 
                         TargetType = typeof(StaticClass), 
                         MethodName = nameof(StaticClass.HandleException))]
     private async Task BooExecute(int i)
@@ -52,7 +49,7 @@ public class FooClass
         return ExceptionHandlingStrategy.Continue;
     }
     
-    [ExceptionHandler(TargetType = typeof(FooClass), MethodName = nameof(HandleBooException))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(FooClass), MethodName = nameof(HandleBooException))]
     public async Task ExecuteBoo(int index, BooData data)
     {
         Console.WriteLine("Hello, World!");
