@@ -4,6 +4,10 @@ A demo of AOP Exception Handling.
 
 - [About The Project](#about-the-project)
 - [Getting Started](#getting-started)
+  - [Setup](#setup)
+  - [Usage](#usage)
+  - [Exception Handling Strategies](#exception-handling-strategies)
+  - [Multiple Exception Handling](#multiple-exception-handling)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -61,9 +65,9 @@ using AElf.ExceptionHandler;
 public class MyTemplateModule : AbpModule
 ```
 
-This will automatically register the AOPException module and setup your project for instrumentation.
+This will automatically register the AOPException module and setup your project for AOP Exception Handling.
 
-To use the Aspect:
+### Usage
 1. Define a Method Returning `FlowBehavior`:
    Create a method in your target class that handles exceptions and returns a Task<ExceptionHandlingStrategy>. The strategy will dictate how the flow of the program should behave (e.g., return, rethrow, throw).
 
@@ -87,6 +91,95 @@ public class ExceptionHandlingService
 public void SomeMethod(int i)
 {
     // Business logic that may throw exceptions
+}
+```
+
+### Exception Handling Strategies
+There are 3 ways to return the exception through the Flow Behavior:
+1. Return: The method will return the ReturnValue implemented.
+```csharp
+public async Task<FlowBehavior> HandleException(Exception ex, string message)
+ {
+     return new FlowBehavior
+     {
+         ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+         ReturnValue = true
+     }
+  }
+```
+2. Rethrow: The method will rethrow the exception.
+```csharp
+public async Task<FlowBehavior> HandleException(Exception ex, string message)
+{
+   return new FlowBehavior
+   {
+        ExceptionHandlingStrategy = ExceptionHandlingStrategy.Rethrow
+   }
+}
+```
+3. Throw: The method will throw a new exception based on the ReturnValue implemented.
+```csharp
+public async Task<FlowBehavior> HandleException(Exception ex, string message)
+{
+   return new FlowBehavior
+   {
+        ExceptionHandlingStrategy = ExceptionHandlingStrategy.Throw,
+        ReturnValue = new Exception("New Exception")
+   }
+}
+```
+
+### Multiple Exception Handling
+You can stack multiple ExceptionHandler attributes on a method to handle multiple exceptions.
+```csharp
+[ExceptionHandler([typeof(InvalidOperationException), typeof(ArgumentException)], TargetType = typeof(BookAppService), MethodName = nameof(HandleSpecificException))]
+[ExceptionHandler(typeof(Exception), TargetType = typeof(BookAppService), MethodName = nameof(HandleException))]
+public async Task<BookDto> CreateAsync(CreateBookInput input)
+{
+    // Business logic that may throw exceptions
+}
+```
+From the example above, the method CreateAsync will handle InvalidOperationException and ArgumentException with the HandleSpecificException method and handle any other exceptions with the HandleException method.
+
+### Callback Method
+Signature of the callback method can be either of the following:
+1. The callback method must have the same parameter as the method that an exception is thrown from with an addition leading Exception parameter.
+```csharp
+public async Task<FlowBehavior> HandleSpecificException(Exception ex, CreateBookInput message)
+{
+    return new FlowBehavior
+    {
+        ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+        ReturnValue = new BookDto()
+    };
+}
+```
+2. The callback method must have only the Exception parameter.
+```csharp
+public async Task<FlowBehavior> HandleException(Exception ex)
+{
+    return new FlowBehavior
+    {
+        ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+        ReturnValue = new BookDto()
+    };
+}
+```
+
+### Finally
+The Finally method is called after the method execution is completed. The method signature should follow the same signature as the method that an exception was thrown from with a return type of Task instead.
+```csharp
+[ExceptionHandler(typeof(Exception), TargetType = typeof(BookAppService), MethodName = nameof(HandleException), 
+                    FinallyTargetType = typeof(BookAppService), FinallyMethodName = nameof(Finally))]
+public async Task<BookDto> CreateAsync(CreateBookInput input)
+{
+    // Business logic that may throw exceptions
+}
+
+public async Task Finally(CreateBookInput message)
+{
+    // cleanup code
+    Console.WriteLine("Finally block");
 }
 ```
 
