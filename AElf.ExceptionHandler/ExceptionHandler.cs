@@ -1,10 +1,11 @@
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
+using Volo.Abp.DependencyInjection;
 
 namespace AElf.ExceptionHandler;
 
-public class ExceptionHandler : IInterceptor
+public class ExceptionHandler : ITransientDependency, IInterceptor
 {
     private readonly ConcurrentDictionary<string, ExceptionHandlerInfo> MethodCache;
     private readonly ConcurrentDictionary<string, Func<object, object[], Task>> FinallyCache;
@@ -162,6 +163,7 @@ public class ExceptionHandler : IInterceptor
         
         if(flowBehavior.ExceptionHandlingStrategy == ExceptionHandlingStrategy.Rethrow)
         {
+            args.Exception = exception;
             throw exception;
         }
 
@@ -172,9 +174,12 @@ public class ExceptionHandler : IInterceptor
 
         if(flowBehavior.ExceptionHandlingStrategy == ExceptionHandlingStrategy.Throw)
         {
-            throw (Exception)flowBehavior.ReturnValue!;
+            var newException = (Exception)flowBehavior.ReturnValue!;
+            args.Exception = newException;
+            throw newException;
         }
-            
+        
+        args.Exception = null;
         args.ReturnValue = flowBehavior.ReturnValue;
         return true;
     }

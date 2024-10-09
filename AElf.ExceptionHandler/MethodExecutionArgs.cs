@@ -9,4 +9,5 @@ public class MethodExecutionArgs
     public object[] Arguments { get; set; }
     public object? ReturnValue { get; set; }
     public Func<Task> Invocation { get; set; }
+    public Exception? Exception { get; set; }
 }

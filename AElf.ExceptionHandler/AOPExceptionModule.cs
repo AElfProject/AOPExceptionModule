@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
+using Orleans;
 using Volo.Abp;
 using Volo.Abp.Modularity;
 
@@ -10,9 +11,10 @@ public class AOPExceptionModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddTransient<ExceptionHandlerInterceptor>()
-                        .AddTransient<IInterceptor, ExceptionHandler>()
-                        .AddSingleton<ConcurrentDictionary<string, ExceptionHandlerInfo>>()
-                        .AddSingleton<ConcurrentDictionary<string, Func<object, object[], Task>>>();
+            .AddTransient<IInterceptor, ExceptionHandler>()
+            .AddSingleton<ConcurrentDictionary<string, ExceptionHandlerInfo>>()
+            .AddSingleton<ConcurrentDictionary<string, Func<object, object[], Task>>>()
+            .AddSingleton<IIncomingGrainCallFilter, AttributeCallFilter>();
                         
         context.Services.OnRegistered(options =>
         {
