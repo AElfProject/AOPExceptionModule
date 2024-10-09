@@ -8,6 +8,8 @@ A demo of AOP Exception Handling.
   - [Usage](#usage)
   - [Exception Handling Strategies](#exception-handling-strategies)
   - [Multiple Exception Handling](#multiple-exception-handling)
+  - [Callback Method](#callback-method)
+  - [Finally](#finally)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
