@@ -48,16 +48,29 @@ Cons:
 
 ## Getting Started
 
-Simply run the program to see the demo.
+### Setup
+
+Add the following dependency to your project's Module class:
+
+```cs
+using AElf.ExceptionHandler;
+
+[DependsOn(
+    typeof(AOPExceptionModule)
+)]
+public class MyTemplateModule : AbpModule
+```
+
+This will automatically register the AOPException module and setup your project for instrumentation.
 
 To use the Aspect:
-1. Define a Method Returning ExceptionHandlingStrategy:
-   Create a method in your target class that handles exceptions and returns a Task<ExceptionHandlingStrategy>. The strategy will dictate how the flow of the program should behave (e.g., retry, rethrow, suppress).
+1. Define a Method Returning `FlowBehavior`:
+   Create a method in your target class that handles exceptions and returns a Task<ExceptionHandlingStrategy>. The strategy will dictate how the flow of the program should behave (e.g., return, rethrow, throw).
 
 ```csharp
 public class ExceptionHandlingService
 {
-    public static async Task<ExceptionHandlingStrategy> HandleException(Exception ex, int i)
+    public static async Task<FlowBehavior> HandleException(Exception ex, int i)
     {
         Console.WriteLine($"Handled exception: {ex.Message}");
         await Task.Delay(100);
@@ -70,7 +83,7 @@ public class ExceptionHandlingService
    Use the ExceptionHandler aspect on the methods where you want to handle exceptions.
 
 ```csharp
-[ExceptionHandler(TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException), Exception = typeof(ArgumentNullException))]
+[ExceptionHandler(typeof(ArgumentNullException), TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
 public void SomeMethod(int i)
 {
     // Business logic that may throw exceptions
@@ -81,8 +94,17 @@ public void SomeMethod(int i)
 
 Example with multiple exception handler:
 ```csharp
-[ExceptionHandler(TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException), Exception = typeof(InvalidOperationException))]
-[ExceptionHandler(TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException), Exception = typeof(ArgumentNullException))]
+[ExceptionHandler(typeof(InvalidOperationException), TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
+[ExceptionHandler(typeof(ArgumentNullException), TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
+public void SomeMethod(int i)
+{
+    // Business logic that may throw exceptions
+}
+```
+
+Or you can have multiple Exceptions:
+```csharp
+[ExceptionHandler([typeof(ArgumentNullException), typeof(InvalidOperationException)], TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
 public void SomeMethod(int i)
 {
     // Business logic that may throw exceptions
