@@ -11,6 +11,7 @@ A demo of AOP Exception Handling.
   - [Callback Method](#callback-method)
   - [Finally](#finally)
   - [Logging](#logging)
+  - [Message](#message)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -217,6 +218,22 @@ protected virtual async Task<bool> SomeMethod(string message)
     return false;
 }
 ```
+
+### Message
+
+You may set customised message for the exception. For example:
+```csharp
+[ExceptionHandler(typeof(Exception), 
+    Message = "Customised message", 
+    TargetType = typeof(BookAppService), 
+    MethodName = nameof(HandleException))]
+protected virtual async Task<bool> SomeMethod(string message)
+{
+    throw new Exception("boo!");
+    return false;
+}
+```
+This would output "Customised message" along with the exception message.
 
 ## Examples
 
