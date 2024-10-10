@@ -10,6 +10,7 @@ A demo of AOP Exception Handling.
   - [Multiple Exception Handling](#multiple-exception-handling)
   - [Callback Method](#callback-method)
   - [Finally](#finally)
+  - [Logging](#logging)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
