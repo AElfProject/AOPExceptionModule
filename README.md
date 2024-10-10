@@ -94,11 +94,15 @@ public class ExceptionHandlingService
 
 ```csharp
 [ExceptionHandler(typeof(ArgumentNullException), TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
-public void SomeMethod(int i)
+protected virtual Task SomeMethod(int i)
 {
     // Business logic that may throw exceptions
 }
 ```
+
+All methods with the ExceptionHandler attribute have 2 requirements:
+1. The method must return a Task.
+2. The method must be virtual or abstract.
 
 ### Exception Handling Strategies
 There are 3 ways to return the exception through the Flow Behavior:
@@ -195,7 +199,7 @@ Example with multiple exception handler:
 ```csharp
 [ExceptionHandler(typeof(InvalidOperationException), TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
 [ExceptionHandler(typeof(ArgumentNullException), TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
-public void SomeMethod(int i)
+public virtual Task SomeMethod(int i)
 {
     // Business logic that may throw exceptions
 }
@@ -204,7 +208,7 @@ public void SomeMethod(int i)
 Or you can have multiple Exceptions:
 ```csharp
 [ExceptionHandler([typeof(ArgumentNullException), typeof(InvalidOperationException)], TargetType = typeof(ExceptionHandlingService), MethodName = nameof(ExceptionHandlingService.HandleException))]
-public void SomeMethod(int i)
+public virtual Task SomeMethod(int i)
 {
     // Business logic that may throw exceptions
 }
