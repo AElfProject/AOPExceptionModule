@@ -80,7 +80,11 @@ public class ExceptionHandlingService
     {
         Console.WriteLine($"Handled exception: {ex.Message}");
         await Task.Delay(100);
-        return ExceptionHandlingStrategy.Rethrow;
+        return new FlowBehavior
+        {
+            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+            ReturnValue = true
+        }
     }
 }
 ```
