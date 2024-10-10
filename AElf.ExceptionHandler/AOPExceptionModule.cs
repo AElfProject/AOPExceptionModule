@@ -14,6 +14,7 @@ public class AOPExceptionModule : AbpModule
             .AddTransient<IInterceptor, ExceptionHandler>()
             .AddSingleton<ConcurrentDictionary<string, ExceptionHandlerInfo>>()
             .AddSingleton<ConcurrentDictionary<string, Func<object, object[], Task>>>()
+            .AddSingleton<ConcurrentDictionary<string, List<ExceptionHandlerAttribute>>>()
             .AddSingleton<IIncomingGrainCallFilter, AttributeCallFilter>();
                         
         context.Services.OnRegistered(options =>

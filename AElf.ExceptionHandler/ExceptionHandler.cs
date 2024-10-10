@@ -1,20 +1,30 @@
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.ExceptionHandler;
 
 public class ExceptionHandler : ITransientDependency, IInterceptor
 {
+    private class Result
+    {
+        public bool Handled { get; set; } = false;
+        public bool Rethrow { get; set; } = false;
+    }
+    
     private readonly ConcurrentDictionary<string, ExceptionHandlerInfo> MethodCache;
     private readonly ConcurrentDictionary<string, Func<object, object[], Task>> FinallyCache;
-    private List<ExceptionHandlerAttribute>? Attributes { get; set; } = null;
+    private readonly ConcurrentDictionary<string, List<ExceptionHandlerAttribute>> AttributeCache;
+    private readonly IServiceProvider _serviceProvider;
     
-    public ExceptionHandler(ConcurrentDictionary<string, ExceptionHandlerInfo> methodCache, ConcurrentDictionary<string, Func<object, object[], Task>> finallyCache)
+    public ExceptionHandler(ConcurrentDictionary<string, ExceptionHandlerInfo> methodCache, ConcurrentDictionary<string, Func<object, object[], Task>> finallyCache, IServiceProvider serviceProvider, ConcurrentDictionary<string, List<ExceptionHandlerAttribute>> attributeCache)
     {
         MethodCache = methodCache;
         FinallyCache = finallyCache;
+        _serviceProvider = serviceProvider;
+        AttributeCache = attributeCache;
     }
 
     public async Task InterceptAsync(MethodExecutionArgs args)
@@ -25,7 +35,11 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         }
         catch (Exception e)
         {
-            OnException(e, args);
+            var result = OnException(e, args);
+            if (result != null && (result.Rethrow || !result.Handled))
+            {
+                throw;
+            }
         }
         finally
         {
@@ -51,16 +65,20 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         }
     }
 
-    private void OnException(Exception ex, MethodExecutionArgs args)
+    private Result? OnException(Exception ex, MethodExecutionArgs args)
     {
         var attributes = GetAttributes(args);
         
         if(attributes == null)
         {
-            return;
+            return null;
         }
 
-        var handled = false;
+        var result = new Result
+        {
+            Handled = false,
+            Rethrow = false
+        };
 
         foreach (var attribute in attributes)
         {
@@ -69,34 +87,37 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
             {
                 foreach (var innerEx in aggEx.InnerExceptions)
                 {
-                    handled = HandleInnerException(innerEx, args, attribute);
+                    result = HandleInnerException(innerEx, args, attribute);
                 }
-                if (handled)
+                if (result.Handled)
                 {
                     break;
                 }
             }
             else
             {
-                handled = HandleInnerException(ex, args, attribute);
-                if (handled)
+                result = HandleInnerException(ex, args, attribute);
+                if (result.Handled)
                 {
                     break;
                 }
             }
         }
 
-        if (!handled)
-        {
-            throw ex;
-        }
+        return result;
     }
 
     private List<ExceptionHandlerAttribute>? GetAttributes(MethodExecutionArgs args)
     {
-        if (Attributes != null)
+        var key = CacheKey(args.TargetObject.GetType(), args.MethodInfo.Name);
+        
+        if (AttributeCache != null && !AttributeCache.IsEmpty)
         {
-            return Attributes;
+            // Try to get the attributes from the cache
+            if (AttributeCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
         }
         
         var attributes = args.MethodInfo.GetCustomAttributes<ExceptionHandlerAttribute>()
@@ -114,9 +135,9 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
             return null;
         }
         
-        Attributes = exceptionHandlerAttributes;
+        AttributeCache.TryAdd(key, exceptionHandlerAttributes);
 
-        return Attributes;
+        return exceptionHandlerAttributes;
     }
     
     private bool HandleFinally(MethodExecutionArgs args, ExceptionHandlerAttribute attribute)
@@ -136,12 +157,34 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         return true;
     }
 
-    private bool HandleInnerException(Exception exception, MethodExecutionArgs args, ExceptionHandlerAttribute attribute)
+    private Result HandleInnerException(Exception exception, MethodExecutionArgs args, ExceptionHandlerAttribute attribute)
     {
         // If the exception is not of the specified type, return early
         if (!attribute.Exceptions.Any(e => e.IsInstanceOfType(exception)))
         {
-            return false;
+            return new Result
+            {
+                Handled = false,
+                Rethrow = false
+            };
+        }
+        
+        var loggerType = typeof(ILogger<>).MakeGenericType(args.TargetObject.GetType());
+        var logger = _serviceProvider.GetService(loggerType);
+        // Log the exception
+        if(logger != null)
+        {
+            ((ILogger)logger).Log(attribute.LogLevel, exception, exception.Message);
+        }
+
+        if (attribute.LogOnly)
+        {
+            args.Exception = exception;
+            return new Result
+            {
+                Handled = true,
+                Rethrow = true
+            };
         }
         
         var exceptionHandlerInfo = GetExceptionHandlerInfo(attribute.TargetType, attribute.MethodName);
@@ -164,12 +207,20 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         if(flowBehavior.ExceptionHandlingStrategy == ExceptionHandlingStrategy.Rethrow)
         {
             args.Exception = exception;
-            throw exception;
+            return new Result
+            {
+                Handled = true,
+                Rethrow = true
+            };
         }
 
         if (flowBehavior.ReturnValue == null)
         {
-            return true;
+            return new Result
+            {
+                Handled = true,
+                Rethrow = false
+            };
         }
 
         if(flowBehavior.ExceptionHandlingStrategy == ExceptionHandlingStrategy.Throw)
@@ -181,7 +232,11 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         
         args.Exception = null;
         args.ReturnValue = flowBehavior.ReturnValue;
-        return true;
+        return new Result
+        {
+            Handled = true,
+            Rethrow = false
+        };
     }
     
     private ExceptionHandlerInfo GetExceptionHandlerInfo(Type targetType, string methodName)
