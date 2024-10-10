@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageType>Contract</PackageType>
+        <PackageType>Dependency</PackageType>
         <PackageId>AElf.ExceptionHandler</PackageId>
         <Title>AElf ExceptionHandler</Title>
         <Authors>AElf</Authors>
