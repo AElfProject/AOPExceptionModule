@@ -25,10 +25,7 @@ public class AOPExceptionModule : AbpModule
                 if (methodInfo.IsDefined(typeof(ExceptionHandlerAttribute), true))
                 {
                     var result = options.Interceptors.TryAdd<ExceptionHandlerInterceptor>();
-                    if (!result)
-                    {
-                        throw new AbpException("ExceptionHandlingInterceptor is already registered.");
-                    }
+                    break;
                 }
             }
         });
