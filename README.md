@@ -193,6 +193,30 @@ public async Task Finally(CreateBookInput message)
 }
 ```
 
+### Logging
+The `LogOnly` attribute is used to log exceptions without handling them. This will result in a rethrow. All logs are logged by `ILogger`. If `LogOnly` is set to `false`, the exception will still be logged and will continue to handle the exception through the assigned method. By default, `LogOnly = false`.
+```csharp
+[ExceptionHandler(typeof(Exception), LogOnly = true)]
+protected virtual async Task<bool> SomeMethod(string message)
+{
+    throw new Exception("boo!");
+    return false;
+}
+```
+
+You may also set the LogLevel for the output of the exception. For example:
+```csharp
+[ExceptionHandler(typeof(Exception), 
+    LogLevel = LogLevel.Information, 
+    TargetType = typeof(BookAppService), 
+    MethodName = nameof(HandleException))]
+protected virtual async Task<bool> SomeMethod(string message)
+{
+    throw new Exception("boo!");
+    return false;
+}
+```
+
 ## Examples
 
 Example with multiple exception handler:
