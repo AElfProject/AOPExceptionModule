@@ -12,6 +12,7 @@ public class ExceptionHandlerAttribute : Attribute
     public LogLevel LogLevel { get; set; } = LogLevel.Error;
     public Type? FinallyTargetType { get; set; } = null;
     public string? FinallyMethodName { get; set; } = null;
+    public string? Message { get; set; } = null;
     
     public ExceptionHandlerAttribute(params Type [] exceptions)
     {

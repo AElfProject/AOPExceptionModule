@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
-using Volo.Abp;
 using Volo.Abp.Modularity;
 
 namespace AElf.ExceptionHandler;

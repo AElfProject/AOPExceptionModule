@@ -174,7 +174,14 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         // Log the exception
         if(logger != null)
         {
-            ((ILogger)logger).Log(attribute.LogLevel, exception, exception.Message);
+            if (attribute.Message != null)
+            {
+                ((ILogger)logger).Log(attribute.LogLevel, exception, "Message: {Message} Exception Message: {ExceptionMessage}", attribute.Message, exception.Message);
+            }
+            else
+            {
+                ((ILogger)logger).Log(attribute.LogLevel, exception, "Exception Message: {ExceptionMessage}", exception.Message);
+            }
         }
 
         if (attribute.LogOnly)
