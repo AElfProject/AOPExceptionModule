@@ -36,7 +36,7 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         catch (Exception e)
         {
             var result = OnException(e, args);
-            if (result != null && (result.Rethrow || !result.Handled))
+            if (result == null || result.Rethrow || !result.Handled)
             {
                 throw;
             }
@@ -192,6 +192,32 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
                 Handled = true,
                 Rethrow = true
             };
+        }
+        
+        if(attribute.ReturnDefault != ReturnDefault.None)
+        {
+            var returnType = args.MethodInfo.ReturnType;
+            Type? genericType = null;
+
+            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                genericType = returnType.GetGenericArguments()[0];
+            }
+
+            if (genericType != null)
+            {
+                args.ReturnValue = attribute.ReturnDefault switch
+                {
+                    ReturnDefault.Default => GetDefaultValue(genericType),
+                    ReturnDefault.New => Activator.CreateInstance(genericType)
+                };
+                
+                return new Result
+                {
+                    Handled = true,
+                    Rethrow = false
+                };
+            }
         }
         
         var exceptionHandlerInfo = GetExceptionHandlerInfo(attribute.TargetType, attribute.MethodName);
@@ -351,5 +377,14 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         methodToCall = lambda.Compile();
 
         return methodToCall;
+    }
+    
+    private static object GetDefaultValue(Type type)
+    {
+        if(type.IsValueType)
+        {
+            return Activator.CreateInstance(type);
+        }
+        return null;
     }
 }

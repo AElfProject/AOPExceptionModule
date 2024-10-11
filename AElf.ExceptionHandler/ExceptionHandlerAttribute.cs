@@ -13,6 +13,7 @@ public class ExceptionHandlerAttribute : Attribute
     public Type? FinallyTargetType { get; set; } = null;
     public string? FinallyMethodName { get; set; } = null;
     public string? Message { get; set; } = null;
+    public ReturnDefault ReturnDefault { get; set; } = ReturnDefault.None;
     
     public ExceptionHandlerAttribute(params Type [] exceptions)
     {
