@@ -12,6 +12,7 @@ A demo of AOP Exception Handling.
   - [Finally](#finally)
   - [Logging](#logging)
   - [Message](#message)
+  - [Return Value](#return-value)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -234,6 +235,24 @@ protected virtual async Task<bool> SomeMethod(string message)
 }
 ```
 This would output "Customised message" along with the exception message.
+
+### Return Value
+
+Instead of a callback method, you may set ReturnValue directly in the attribute through ReturnDefault property. For example:
+```csharp
+[ExceptionHandler([typeof(InvalidOperationException)], ReturnDefault = ReturnDefault.New)]
+public override async Task<PagedResultDto<BookDto>> GetListAsync(PagedAndSortedResultRequestDto input)
+{
+    var thrown = await ShouldThrowInvalidOperationException();
+    return await base.GetListAsync(input);
+}
+```
+The above demonstrates how to return a new instance of the return type of the method.
+
+The ReturnDefault property can be set to the following:
+1. New: Returns a new instance of the return type.
+2. Default: Returns the default value of the return type (i.e. default(T)).
+3. None: Indicates not to use the ReturnDefault property.
 
 ## Examples
 
