@@ -7,7 +7,7 @@
         <Authors>AElf</Authors>
         <Description>An ExceptionHandler module for use in ABP and Orleans framework.</Description>
         <PackageTags>abp;module;grains;orleans</PackageTags>
-        <TargetFrameworks>net8.0;net7.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RepositoryUrl>https://github.com/AElfProject/AOPExceptionModule</RepositoryUrl>
