@@ -13,6 +13,9 @@ A demo of AOP Exception Handling.
   - [Logging](#logging)
   - [Message](#message)
   - [Return Value](#return-value)
+  - [Logging Method Parameters](#logging-method-parameters)
+  - [Return Type Exception](#return-type-exception)
+- [Limitations](#limitations)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -141,6 +144,16 @@ public async Task<FlowBehavior> HandleException(Exception ex, string message)
    }
 }
 ```
+4. Continue: The method will continue to the next exception specified or rethrow if there are no other exceptions.
+```csharp
+public async Task<FlowBehavior> HandleException(Exception ex, string message)
+{
+   return new FlowBehavior
+   {
+        ExceptionHandlingStrategy = ExceptionHandlingStrategy.Continue
+   }
+}
+```
 
 ### Multiple Exception Handling
 You can stack multiple ExceptionHandler attributes on a method to handle multiple exceptions.
@@ -253,6 +266,31 @@ The ReturnDefault property can be set to the following:
 1. New: Returns a new instance of the return type.
 2. Default: Returns the default value of the return type (i.e. default(T)).
 3. None: Indicates not to use the ReturnDefault property.
+
+### Logging Method Parameters
+
+You may log the method parameters by specifying through the `LogTargets`. For example:
+```csharp
+[ExceptionHandler(typeof(Exception), 
+    ReturnDefault = ReturnDefault.Default, 
+    LogTargets = ["i", "dummy"])]
+protected virtual async Task<decimal> Boo(int i, Dummy dummy, string name = "some name")
+{
+    throw new Exception("boo!");
+    return 10;
+}
+```
+The above will log the values of i and dummy when the exception is thrown.
+
+### Return Type Exception
+
+The program will throw a `ReturnTypeMismatchException` when the return type specified in your `FlowBehavior.ReturnValue` is not the corresponding return type to the method that has thrown.
+
+## Limitations
+1. The method must return a Task.
+2. The method must be virtual or abstract.
+3. Unit Test class methods are not supported.
+4. `internal` methods are not supported.
 
 ## Examples
 
