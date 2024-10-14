@@ -4,7 +4,6 @@ A demo of AOP Exception Handling.
 
 - [About The Project](#about-the-project)
 - [Getting Started](#getting-started)
-  - [Setup](#setup)
   - [Usage](#usage)
   - [Exception Handling Strategies](#exception-handling-strategies)
   - [Multiple Exception Handling](#multiple-exception-handling)
@@ -59,21 +58,6 @@ Cons:
   - Errors related to method names or parameter mismatches will only be detected at runtime, increasing the potential for runtime exceptions.
 
 ## Getting Started
-
-### Setup
-
-Add the following dependency to your project's Module class:
-
-```cs
-using AElf.ExceptionHandler;
-
-[DependsOn(
-    typeof(AOPExceptionModule)
-)]
-public class MyTemplateModule : AbpModule
-```
-
-This will automatically register the AOPException module and setup your project for AOP Exception Handling.
 
 ### Usage
 1. Define a Method Returning `FlowBehavior`:
