@@ -2,11 +2,10 @@ using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
-using Volo.Abp.DependencyInjection;
 
 namespace AElf.ExceptionHandler;
 
-public class ExceptionHandler : ITransientDependency, IInterceptor
+public class ExceptionHandler : IInterceptor
 {
     private class Result
     {
@@ -174,14 +173,7 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
         // Log the exception
         if(logger != null)
         {
-            if (attribute.Message != null)
-            {
-                ((ILogger)logger).Log(attribute.LogLevel, exception, "Message: {Message} Exception Message: {ExceptionMessage}", attribute.Message, exception.Message);
-            }
-            else
-            {
-                ((ILogger)logger).Log(attribute.LogLevel, exception, "Exception Message: {ExceptionMessage}", exception.Message);
-            }
+            LogException(exception, args, attribute, logger);
         }
 
         if (attribute.LogOnly)
@@ -201,7 +193,7 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
 
             if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
-                genericType = returnType.GetGenericArguments()[0];
+                genericType = returnType.GetGenericArguments().FirstOrDefault();
             }
 
             if (genericType != null)
@@ -218,6 +210,13 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
                     Rethrow = false
                 };
             }
+            
+            // if the method returns Task and not Task<>
+            return new Result
+            {
+                Handled = true,
+                Rethrow = false
+            };
         }
         
         var exceptionHandlerInfo = GetExceptionHandlerInfo(attribute.TargetType, attribute.MethodName);
@@ -246,6 +245,16 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
                 Rethrow = true
             };
         }
+        
+        if(flowBehavior.ExceptionHandlingStrategy == ExceptionHandlingStrategy.Continue)
+        {
+            args.Exception = exception;
+            return new Result
+            {
+                Handled = false,
+                Rethrow = false
+            };
+        }
 
         if (flowBehavior.ReturnValue == null)
         {
@@ -258,20 +267,85 @@ public class ExceptionHandler : ITransientDependency, IInterceptor
 
         if(flowBehavior.ExceptionHandlingStrategy == ExceptionHandlingStrategy.Throw)
         {
+            if (args.MethodInfo.ReturnType != typeof(Exception))
+            {
+                throw new ReturnTypeMismatchException("Return type mismatch when trying to throw a new exception. ReturnValue should be of type Exception.");
+            }
             var newException = (Exception)flowBehavior.ReturnValue!;
             args.Exception = newException;
             throw newException;
         }
         
         args.Exception = null;
-        args.ReturnValue = flowBehavior.ReturnValue;
+        
+        //throw custom exception if the return is different
+        var flowReturnType = flowBehavior.ReturnValue.GetType();
+        Type? genericReturnType = null;
+
+        if (args.MethodInfo.ReturnType.IsGenericType && args.MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+        {
+            genericReturnType = args.MethodInfo.ReturnType.GetGenericArguments().FirstOrDefault();
+        }
+
+        if (genericReturnType != null)
+        {
+            if (genericReturnType != flowReturnType)
+            {
+                throw new ReturnTypeMismatchException(
+                    $"Return type mismatch when handling exception's return value. ReturnValue should be of type {genericReturnType} but was {flowReturnType}.");
+            }
+
+            args.ReturnValue = flowBehavior.ReturnValue;
+        }
+
         return new Result
         {
             Handled = true,
             Rethrow = false
         };
     }
-    
+
+    private static void LogException(Exception exception, MethodExecutionArgs args, ExceptionHandlerAttribute attribute,
+        object logger)
+    {
+        var logValues = new List<object> { exception.Message };
+        var logMessage = $"Exception Message: {{ExceptionMessage}}";
+        //get parameter names from args.MethodInfo and check if it exists within attribute.LogTargets. if it does, log it
+        if (attribute.LogTargets != null)
+        {
+            var parameters = args.MethodInfo.GetParameters();
+            var parameterNames = parameters.Select(p => p.Name).ToArray();
+            var logTargets = attribute.LogTargets.Intersect(parameterNames).ToArray();
+            if (logTargets.Length > 0)
+            {
+                foreach (var logTarget in logTargets)
+                {
+                    // check if the parameter is a value type or a reference type
+                    var parameter = parameters.First(p => p.Name == logTarget);
+                    if (parameter.ParameterType.IsValueType || parameter.ParameterType == typeof(string))
+                    {
+                        logMessage += $" {logTarget}: {{{logTarget}}}";
+                    }
+                    else
+                    {
+                        logMessage += $" {logTarget}: {{@{logTarget}}}";
+                    }
+                }
+                logValues.AddRange(logTargets.Select(target => args.Arguments[Array.IndexOf(parameterNames, target)]));
+            }
+        }
+        if (attribute.Message != null)
+        {
+            logMessage = $"Message: {{Message}} " + logMessage;
+            logValues.Insert(0, attribute.Message);
+            ((ILogger)logger).Log(attribute.LogLevel, exception, logMessage, logValues.ToArray());
+        }
+        else
+        {
+            ((ILogger)logger).Log(attribute.LogLevel, exception, logMessage, logValues.ToArray());
+        }
+    }
+
     private ExceptionHandlerInfo GetExceptionHandlerInfo(Type targetType, string methodName)
     {
         var cacheKey = CacheKey(targetType, methodName);

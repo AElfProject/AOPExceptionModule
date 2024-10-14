@@ -5,4 +5,5 @@ public enum ExceptionHandlingStrategy
     Rethrow,
     Return,
     Throw,
+    Continue
 }

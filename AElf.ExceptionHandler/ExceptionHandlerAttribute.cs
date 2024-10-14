@@ -14,6 +14,7 @@ public class ExceptionHandlerAttribute : Attribute
     public string? FinallyMethodName { get; set; } = null;
     public string? Message { get; set; } = null;
     public ReturnDefault ReturnDefault { get; set; } = ReturnDefault.None;
+    public string[]? LogTargets { get; set; } = null;
     
     public ExceptionHandlerAttribute(params Type [] exceptions)
     {
