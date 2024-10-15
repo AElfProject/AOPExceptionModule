@@ -392,7 +392,7 @@ public class ExceptionHandler : IInterceptor
     private static ExceptionHandlerInfo CreateExceptionHandlerInfo(Type targetType, string methodName)
     {
         Func<object, object[], Task<FlowBehavior>> methodToCall;
-        var methodInfo = targetType.GetMethod(methodName);
+        var methodInfo = targetType.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
         var methodParams = methodInfo.GetParameters();
 
         var instanceParameter = Expression.Parameter(typeof(object), "instance");
