@@ -1,7 +1,8 @@
-namespace AElf.ExceptionHandler;
-
-public class FlowBehavior
+namespace AElf.ExceptionHandler
 {
-    public ExceptionHandlingStrategy ExceptionHandlingStrategy { get; set; }
-    public object? ReturnValue { get; set; }
+    public class FlowBehavior
+    {
+        public ExceptionHandlingStrategy ExceptionHandlingStrategy { get; set; }
+        public object? ReturnValue { get; set; }
+    }
 }

@@ -1,9 +1,10 @@
-namespace AElf.ExceptionHandler;
-
-public enum ExceptionHandlingStrategy
+namespace AElf.ExceptionHandler
 {
-    Rethrow,
-    Return,
-    Throw,
-    Continue
+    public enum ExceptionHandlingStrategy
+    {
+        Rethrow,
+        Return,
+        Throw,
+        Continue
+    }
 }

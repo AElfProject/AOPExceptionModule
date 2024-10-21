@@ -1,7 +1,11 @@
-namespace AElf.ExceptionHandler;
+using System;
+using System.Threading.Tasks;
 
-public class ExceptionHandlerInfo
+namespace AElf.ExceptionHandler
 {
-    public Func<object, object[], Task<FlowBehavior>> Method { get; set; }
-    public bool ContainsExceptionParamOnly { get; set; }
+    public class ExceptionHandlerInfo
+    {
+        public Func<object, object[], Task<FlowBehavior>> Method { get; set; }
+        public bool ContainsExceptionParamOnly { get; set; }
+    }
 }

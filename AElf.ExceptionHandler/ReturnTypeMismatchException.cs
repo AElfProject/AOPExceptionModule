@@ -1,8 +1,11 @@
-namespace AElf.ExceptionHandler;
+using System;
 
-public class ReturnTypeMismatchException : Exception
+namespace AElf.ExceptionHandler
 {
-    public ReturnTypeMismatchException(string message) : base(message)
+    public class ReturnTypeMismatchException : Exception
     {
+        public ReturnTypeMismatchException(string message) : base(message)
+        {
+        }
     }
 }

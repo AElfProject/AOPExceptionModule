@@ -1,13 +1,16 @@
+using System;
 using System.Reflection;
+using System.Threading.Tasks;
 
-namespace AElf.ExceptionHandler;
-
-public class MethodExecutionArgs
+namespace AElf.ExceptionHandler
 {
-    public object TargetObject { get; set; }
-    public MethodInfo MethodInfo { get; set; }
-    public object[] Arguments { get; set; }
-    public object? ReturnValue { get; set; }
-    public Func<Task> Invocation { get; set; }
-    public Exception? Exception { get; set; }
+    public class MethodExecutionArgs
+    {
+        public object TargetObject { get; set; }
+        public MethodInfo MethodInfo { get; set; }
+        public object[] Arguments { get; set; }
+        public object? ReturnValue { get; set; }
+        public Func<Task> Invocation { get; set; }
+        public Exception? Exception { get; set; }
+    }
 }

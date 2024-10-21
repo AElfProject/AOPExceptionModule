@@ -1,6 +1,9 @@
-namespace AElf.ExceptionHandler;
+using System.Threading.Tasks;
 
-public interface IInterceptor
+namespace AElf.ExceptionHandler
 {
-    Task InterceptAsync(MethodExecutionArgs args);
+    public interface IInterceptor
+    {
+        Task InterceptAsync(MethodExecutionArgs args);
+    }
 }

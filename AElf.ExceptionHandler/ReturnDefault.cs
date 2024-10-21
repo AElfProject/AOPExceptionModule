@@ -1,8 +1,9 @@
-namespace AElf.ExceptionHandler;
-
-public enum ReturnDefault
+namespace AElf.ExceptionHandler
 {
-    None,
-    Default,
-    New
+    public enum ReturnDefault
+    {
+        None,
+        Default,
+        New
+    }
 }
