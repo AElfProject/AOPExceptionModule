@@ -275,7 +275,7 @@ namespace AElf.ExceptionHandler
 
             if (flowBehavior.ExceptionHandlingStrategy == ExceptionHandlingStrategy.Throw)
             {
-                if (!typeof(Exception).IsAssignableFrom(args.MethodInfo.ReturnType))
+                if (!(flowBehavior.ReturnValue is Exception))
                 {
                     throw new ReturnTypeMismatchException(
                         "Return type mismatch when trying to throw a new exception. ReturnValue should be of type Exception.");
